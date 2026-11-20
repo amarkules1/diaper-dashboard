@@ -197,6 +197,15 @@ STORES: Dict[str, Dict[str, Any]] = {
         "free_shipping_threshold": 35.0,
         "accent_color": "#044194",
     },
+    "Amazon": {
+        "store_id": "amazon",
+        "name": "Amazon",
+        "domain": "amazon.com",
+        "search_url": "https://www.amazon.com/s?k={query}",
+        "membership_required": False,
+        "free_shipping_threshold": 35.0,
+        "accent_color": "#ff9900",
+    },
 }
 
 # Comprehensive Diaper Brand & Product Catalog
@@ -219,7 +228,7 @@ BRANDS_CATALOG: List[Dict[str, Any]] = [
         "fragrance_free": False,
         "features": "Blowout Barrier|BreatheFree Liner|Dual Leak-Guard Barriers|Color-Changing Wetness Indicator|Dermatologist Approved|Paraben & Latex Free",
         "description": "Pediatrician #1 recommended diaper featuring a front-to-back Blowout Barrier and ultra-soft Heart Quilts liner that pulls wetness and mess away from delicate skin for up to 12 hours of overnight protection.",
-        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Sam's Club"],
+        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Sam's Club", "Amazon"],
         "sizes": ["N", "1", "2", "3", "4", "5", "6", "7"],
         "counts_by_tier": {
             "Trial / Travel Pack": {"N": 31, "1": 32, "2": 29, "3": 25, "4": 22, "5": 19, "6": 16, "7": 14},
@@ -252,7 +261,7 @@ BRANDS_CATALOG: List[Dict[str, Any]] = [
         "fragrance_free": True,
         "features": "Shea Butter Enriched Liner|Plant-Based Outer Cover|0% Chlorine Bleaching|Fragrance & Paraben Free|Hypoallergenic|Wetness Indicator",
         "description": "Crafted with premium cotton, soft plant-based fibers, and a shea butter-infused liner to help moisturize and protect sensitive skin without fragrances, parabens, or elemental chlorine bleaching.",
-        "available_stores": ["Target", "Walmart", "Meijer", "Kroger"],
+        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Amazon"],
         "sizes": ["N", "1", "2", "3", "4", "5", "6"],
         "counts_by_tier": {
             "Trial / Travel Pack": {"N": 28, "1": 31, "2": 27, "3": 24, "4": 21, "5": 18, "6": 15},
@@ -283,7 +292,7 @@ BRANDS_CATALOG: List[Dict[str, Any]] = [
         "fragrance_free": True,
         "features": "GentleAbsorb Liner|Pocketed Back Waistband|Leak Lock System|Umbilical Cord Cutout (Size N)|Fragrance Free|Wetness Indicator",
         "description": "Designed for gentle skin protection with a curved and stretchy fit, an extra-soft GentleAbsorb pillowy liner, and a pocketed back waistband that helps stop blowouts before they happen.",
-        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Costco", "Sam's Club"],
+        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Costco", "Sam's Club", "Amazon"],
         "sizes": ["N", "1", "2", "3", "4", "5", "6"],
         "counts_by_tier": {
             "Trial / Travel Pack": {"N": 31, "1": 32, "2": 29, "3": 25, "4": 22, "5": 19, "6": 16},
@@ -316,7 +325,7 @@ BRANDS_CATALOG: List[Dict[str, Any]] = [
         "fragrance_free": True,
         "features": "Double Grip Strips|Contoured Active Shape|DryTouch Liner|SnugFit Waistband|SizeUp Indicator|12-Hour Leak Lock",
         "description": "Built for crawling, cruising, and walking babies with Double Grip Strips along the sides and a contoured shape that stays securely in place during active play without sagging.",
-        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Costco", "Sam's Club"],
+        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Costco", "Sam's Club", "Amazon"],
         "sizes": ["3", "4", "5", "6", "7"],
         "counts_by_tier": {
             "Jumbo / Regular Pack": {"3": 76, "4": 66, "5": 58, "6": 50, "7": 42},
@@ -525,7 +534,7 @@ BRANDS_CATALOG: List[Dict[str, Any]] = [
         "fragrance_free": False,
         "features": "Triple Leakguards|Nightlock Plus Core|Contoured Leg Cuffs|Wetness Indicator|Money-Back Leak Guarantee",
         "description": "Delivers triple leakguards and a large Nightlock Plus absorbent area that locks away wetness rapidly while keeping family diaper budgets low across grocery and big-box retailers.",
-        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Sam's Club"],
+        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Sam's Club", "Amazon"],
         "sizes": ["N", "1", "2", "3", "4", "5", "6", "7"],
         "counts_by_tier": {
             "Trial / Travel Pack": {"N": 34, "1": 40, "2": 36, "3": 31, "4": 27, "5": 23, "6": 19, "7": 17},
@@ -558,7 +567,7 @@ BRANDS_CATALOG: List[Dict[str, Any]] = [
         "fragrance_free": True,
         "features": "Sustainably Harvested Fluff Pulp|Plant-Based Back Sheet|OEKO-TEX Certified|Quilted Bubble Liner|Designer Prints|Cruelty Free",
         "description": "Eco-conscious diapers crafted with responsibly managed plant-based fluff pulp, a quick-absorb channel design, and adorable nursery prints without latex, fragrance, or parabens.",
-        "available_stores": ["Target", "Walmart", "Meijer", "Kroger"],
+        "available_stores": ["Target", "Walmart", "Meijer", "Kroger", "Amazon"],
         "sizes": ["N", "1", "2", "3", "4", "5", "6"],
         "counts_by_tier": {
             "Trial / Travel Pack": {"N": 27, "1": 32, "2": 29, "3": 24, "4": 21, "5": 18, "6": 15},
@@ -633,11 +642,45 @@ BRANDS_CATALOG: List[Dict[str, Any]] = [
             "Super / Enormous Pack": 29.49,
         },
     },
+    {
+        "brand_id": "mama-bear-gentle",
+        "brand_name": "Mama Bear",
+        "line_name": "Gentle Touch",
+        "full_name": "Amazon Mama Bear Gentle Touch Diapers",
+        "tier": "Store Brand Value",
+        "rating": 4.5,
+        "review_count": 34890,
+        "absorbency_score": 8.9,
+        "softness_score": 8.8,
+        "leak_protection_score": 8.9,
+        "eco_friendly": False,
+        "hypoallergenic": True,
+        "wetness_indicator": True,
+        "overnight_ready": True,
+        "fragrance_free": True,
+        "features": "Hypoallergenic & Dermatologist Tested|Full-Protect Channel Core|Breathable Outer Cover|Wetness Indicator|Subscribe & Save Eligible",
+        "description": "Amazon's exclusive Mama Bear diaper line featuring a contoured fit, breathable outer cover, and rapid-absorption channels that deliver up to 12 hours of dry comfort at warehouse-competitive pricing.",
+        "available_stores": ["Amazon"],
+        "sizes": ["N", "1", "2", "3", "4", "5", "6", "7"],
+        "counts_by_tier": {
+            "Trial / Travel Pack": {"N": 34, "1": 44, "2": 40, "3": 36, "4": 31, "5": 27, "6": 23, "7": 20},
+            "Jumbo / Regular Pack": {"N": 108, "1": 132, "2": 120, "3": 108, "4": 92, "5": 80, "6": 68, "7": 58},
+            "Super / Enormous Pack": {"N": 168, "1": 204, "2": 186, "3": 168, "4": 148, "5": 128, "6": 108, "7": 92},
+            "Club / Bulk Case": {"N": 198, "1": 248, "2": 224, "3": 200, "4": 176, "5": 152, "6": 128, "7": 108},
+        },
+        "base_prices": {
+            "Trial / Travel Pack": 7.49,
+            "Jumbo / Regular Pack": 19.49,
+            "Super / Enormous Pack": 30.99,
+            "Club / Bulk Case": 37.99,
+        },
+    },
 ]
 
 # Store price adjustment multipliers (reflecting everyday pricing dynamics)
 STORE_PRICE_FACTORS: Dict[str, float] = {
     "Walmart": 0.97,
+    "Amazon": 0.96,
     "Target": 1.00,
     "Meijer": 1.01,
     "Kroger": 1.015,
@@ -652,6 +695,7 @@ STORE_PROMO_MESSAGES: Dict[str, List[str]] = {
     "Kroger": ["Save $4 with Digital Coupon", "Mega Event Savings", "Everyday Price", ""],
     "Costco": ["Warehouse Member Exclusive", "$9 Instant Warehouse Savings", "Includes 2-Day Delivery", ""],
     "Sam's Club": ["Instant Savings for Plus Members", "Club Pickup Available", "Member Value Price", ""],
+    "Amazon": ["15% Off Subscribe & Save", "Clip $4 Off Coupon", "Prime Free Next-Day Delivery", ""],
 }
 
 

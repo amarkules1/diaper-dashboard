@@ -6,7 +6,7 @@ from scraper.scrape_diapers import build_datasets, STORES, SIZE_STANDARDS
 
 
 def test_scraper_generates_expected_stores_and_sizes():
-    target_stores = ["Meijer", "Target", "Costco", "Walmart", "Sam's Club", "Kroger"]
+    target_stores = ["Meijer", "Target", "Costco", "Walmart", "Sam's Club", "Kroger", "Amazon"]
     prices, brands, sizes, meta = build_datasets(selected_stores=target_stores, skip_network=True)
 
     assert len(sizes) == len(SIZE_STANDARDS)

@@ -46,7 +46,7 @@
 
             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-200/70 text-sky-950 text-xs font-semibold">
               <Store class="w-3.5 h-3.5 text-sky-700" />
-              <span>{{ selectedStores.length === allStores.length ? 'All 6 Stores' : `${selectedStores.length} Stores` }}</span>
+              <span>{{ selectedStores.length === allStores.length ? `All ${allStores.length} Stores` : `${selectedStores.length} Stores` }}</span>
             </span>
 
             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-200/70 text-sky-950 text-xs font-semibold">
@@ -171,7 +171,7 @@
                     @click="selectAllStores"
                     class="font-bold text-sky-700 hover:text-sky-950"
                   >
-                    Select All (6)
+                    Select All ({{ allStores.length }})
                   </button>
                   <span class="text-sky-300">|</span>
                   <button
@@ -1122,7 +1122,7 @@
         <!-- Store Leaderboard Table -->
         <div class="bg-sky-50/90 rounded-2xl border border-sky-200 shadow-xs p-5">
           <h3 class="text-sm font-extrabold uppercase tracking-wider text-sky-950 mb-1">
-            Retailer Unit Price Comparison (Meijer, Target, Costco, Walmart, Sam's Club, Kroger)
+            Retailer Unit Price Comparison (Meijer, Target, Costco, Walmart, Sam's Club, Kroger, Amazon)
           </h3>
           <p class="text-xs text-sky-800/80 mb-4">
             Comparing lowest and average per-diaper unit pricing across your selected size and pack filters.
@@ -1453,6 +1453,7 @@ const allStores = [
   { name: 'Walmart', color: '#0071dc', club: false },
   { name: "Sam's Club", color: '#0067a0', club: true },
   { name: 'Kroger', color: '#044194', club: false },
+  { name: 'Amazon', color: '#ff9900', club: false },
 ]
 
 const storeColorMap = Object.fromEntries(allStores.map((s) => [s.name, s.color]))
