@@ -520,7 +520,194 @@
         </div>
 
         <div v-else class="bg-sky-50/90 rounded-2xl border border-sky-200 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
+          <!-- Mobile Sortable Header Chips (< md screens) -->
+          <div class="md:hidden bg-sky-200/60 border-b border-sky-200 p-3">
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-sky-800 mb-2">
+              Tap a column to sort:
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="col in sortableColumns"
+                :key="col.field"
+                @click="toggleSort(col.field)"
+                :class="[
+                  'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all',
+                  sortField === col.field
+                    ? 'bg-sky-700 text-white border-sky-700 shadow-xs'
+                    : 'bg-sky-50/90 text-sky-900 border-sky-300 hover:bg-sky-100'
+                ]"
+              >
+                <span>{{ col.label }}</span>
+                <component
+                  :is="getSortIcon(col.field)"
+                  class="w-3 h-3"
+                  :class="sortField === col.field ? 'text-white' : 'text-sky-600/70'"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Mobile Stacked Cards (< md screens, zero horizontal scroll) -->
+          <div class="md:hidden divide-y divide-sky-200/80">
+            <div
+              v-for="(item, idx) in paginatedPrices"
+              :key="`${item.sku_id}-mobile`"
+              class="p-4 space-y-3 hover:bg-sky-100/60 transition-colors"
+            >
+              <!-- Card Top: Brand, Badge & Unit Cost Pill -->
+              <div class="flex items-start justify-between gap-2">
+                <button
+                  @click="openBrandDetail(item.brand_id)"
+                  class="text-left flex-1 min-w-0"
+                >
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="font-extrabold text-sky-950 text-sm">
+                      {{ item.brand_name }} {{ item.line_name }}
+                    </span>
+                    <span
+                      v-if="idx === 0 && sortField === 'unit' && sortDirection === 'asc' && currentPage === 1"
+                      class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"
+                    >
+                      #1 Best Value
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-sky-800/85 line-clamp-1 mt-0.5">
+                    {{ brandMap[item.brand_id]?.description }}
+                  </p>
+                </button>
+
+                <div class="text-right shrink-0 tabular-nums">
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-extrabold',
+                      getUnitCostBadgeClass(item.price_per_diaper)
+                    ]"
+                  >
+                    ${{ item.price_per_diaper.toFixed(2) }}/ea
+                  </span>
+                  <div class="text-[10px] text-sky-700/80 mt-0.5">
+                    ({{ (item.price_per_diaper * 100).toFixed(1) }}¢ / diaper)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Middle Grid: Store, Size/Age, Pack Count, Box & Monthly Price -->
+              <div class="grid grid-cols-2 gap-2.5 bg-sky-100/80 p-3 rounded-xl border border-sky-200/80 text-xs">
+                <div>
+                  <div class="text-[10px] font-bold uppercase text-sky-700/80">Retailer Store</div>
+                  <div class="inline-flex items-center gap-1.5 font-extrabold text-sky-950 mt-0.5">
+                    <span
+                      class="w-2.5 h-2.5 rounded-full shrink-0"
+                      :style="{ backgroundColor: storeColorMap[item.store] || '#0284c7' }"
+                    ></span>
+                    <span>{{ item.store }}</span>
+                  </div>
+                  <div v-if="item.promo_badge" class="mt-0.5 text-[10px] font-semibold text-amber-800 truncate">
+                    {{ item.promo_badge }}
+                  </div>
+                </div>
+
+                <div>
+                  <div class="text-[10px] font-bold uppercase text-sky-700/80">Size &amp; Age Range</div>
+                  <div class="font-extrabold text-sky-950 mt-0.5">
+                    {{ item.size_label }}
+                  </div>
+                  <div class="text-[11px] font-semibold text-sky-700 truncate">
+                    {{ item.age_group_short }} ({{ item.weight_range_lbs }})
+                  </div>
+                </div>
+
+                <div>
+                  <div class="text-[10px] font-bold uppercase text-sky-700/80">Pack Size &amp; Count</div>
+                  <div class="font-extrabold text-sky-950 mt-0.5">
+                    {{ item.diaper_count }} diapers
+                  </div>
+                  <div class="text-[11px] text-sky-800/80 truncate">
+                    {{ item.pack_size_tier }}
+                  </div>
+                </div>
+
+                <div class="tabular-nums">
+                  <div class="text-[10px] font-bold uppercase text-sky-700/80">Box &amp; Est. Monthly</div>
+                  <div class="flex items-baseline gap-1.5 mt-0.5">
+                    <span class="font-extrabold text-sky-950 text-sm">${{ item.price.toFixed(2) }}</span>
+                    <span v-if="item.on_sale" class="text-[11px] text-sky-600 line-through">
+                      ${{ item.regular_price.toFixed(2) }}
+                    </span>
+                  </div>
+                  <div class="text-[11px] font-semibold text-sky-800">
+                    ~${{ item.monthly_cost_est.toFixed(2) }}/mo
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature Chips -->
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="feat in (brandMap[item.brand_id]?.featuresList || []).slice(0, 3)"
+                  :key="feat"
+                  class="px-2 py-0.5 rounded-md bg-sky-200/60 text-sky-900 text-[10px] font-medium"
+                >
+                  {{ feat }}
+                </span>
+                <button
+                  @click="openBrandDetail(item.brand_id)"
+                  class="px-2 py-0.5 rounded-md bg-sky-200 text-sky-800 text-[10px] font-bold"
+                >
+                  More Details →
+                </button>
+              </div>
+
+              <!-- Card Footer: Rating, Stock Status & Direct Store Link -->
+              <div class="flex items-center justify-between pt-1 text-xs">
+                <div class="flex items-center gap-2">
+                  <div class="inline-flex items-center gap-1 font-bold text-sky-950">
+                    <Star class="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                    <span class="tabular-nums">{{ item.rating.toFixed(1) }}</span>
+                    <span class="text-[11px] font-normal text-sky-700/80 tabular-nums">
+                      ({{ item.review_count.toLocaleString() }})
+                    </span>
+                  </div>
+
+                  <span
+                    :class="[
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold',
+                      item.availability === 'In Stock'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : item.availability === 'Low Stock'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-rose-100 text-rose-800'
+                    ]"
+                  >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full"
+                      :class="
+                        item.availability === 'In Stock'
+                          ? 'bg-emerald-500'
+                          : item.availability === 'Low Stock'
+                          ? 'bg-amber-500'
+                          : 'bg-rose-500'
+                      "
+                    ></span>
+                    {{ item.availability }}
+                  </span>
+                </div>
+
+                <a
+                  :href="item.product_url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-600 text-white text-[11px] font-bold hover:bg-sky-700 shadow-2xs"
+                >
+                  <span>Check {{ item.store }}</span>
+                  <ExternalLink class="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table (md and larger screens) -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-sky-200/60 border-b border-sky-200 text-[11px] font-extrabold uppercase tracking-wider text-sky-900 select-none">
@@ -992,7 +1179,54 @@
             Because larger diaper sizes contain fewer diapers per box at the same retail price, unit cost increases as your child grows.
           </p>
 
-          <div class="overflow-x-auto">
+          <!-- Mobile Stacked Cards (< md screens) -->
+          <div class="md:hidden space-y-2.5">
+            <div
+              v-for="row in sizeBreakdownRows"
+              :key="`${row.size_code}-mobile`"
+              @click="selectedSize = row.size_code; activeTab = 'offers'"
+              class="p-3.5 rounded-xl border border-sky-200 bg-sky-100/70 active:bg-sky-200/80 cursor-pointer space-y-2"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="font-extrabold text-sm text-sky-950">{{ row.size_label }}</span>
+                  <span class="ml-2 px-2 py-0.5 rounded-md bg-sky-200 text-sky-900 text-[11px] font-bold">
+                    {{ row.age_range }}
+                  </span>
+                </div>
+                <span class="text-xs font-bold text-sky-800">{{ row.weight_range_lbs }}</span>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 pt-2 border-t border-sky-200/80 text-center tabular-nums">
+                <div>
+                  <div class="text-[10px] font-bold uppercase text-sky-700">Lowest $/ea</div>
+                  <div class="text-sm font-extrabold text-emerald-700">
+                    {{ row.minUnit ? `$${row.minUnit.toFixed(2)}` : '—' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold uppercase text-sky-700">Avg $/ea</div>
+                  <div class="text-sm font-extrabold text-sky-950">
+                    {{ row.avgUnit ? `$${row.avgUnit.toFixed(2)}` : '—' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-[10px] font-bold uppercase text-sky-700">Est. Monthly</div>
+                  <div class="text-sm font-extrabold text-sky-700">
+                    {{ row.avgMonthly ? `$${row.avgMonthly.toFixed(2)}` : '—' }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-[11px] text-sky-800 flex items-center justify-between pt-1">
+                <span class="truncate pr-2">Best: <strong class="text-sky-950">{{ row.bestOfferLabel || '—' }}</strong></span>
+                <span class="shrink-0 font-semibold text-sky-700">{{ row.daily_usage_est }}/day →</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table (md+ screens) -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-sky-200/60 border-b border-sky-200 text-[11px] font-bold uppercase text-sky-900">
@@ -1247,6 +1481,18 @@ const onlyOnSale = ref(false)
 // Column header sorting state
 const sortField = ref('unit')
 const sortDirection = ref('asc')
+
+const sortableColumns = [
+  { field: 'unit', label: 'Cost / Diaper' },
+  { field: 'price', label: 'Box Price' },
+  { field: 'rating', label: 'Rating' },
+  { field: 'store', label: 'Store' },
+  { field: 'size', label: 'Size & Age' },
+  { field: 'count', label: 'Pack Count' },
+  { field: 'monthly', label: 'Monthly Est.' },
+  { field: 'brand', label: 'Brand' },
+  { field: 'availability', label: 'Stock' },
+]
 
 const activeTab = ref('offers')
 const currentPage = ref(1)
