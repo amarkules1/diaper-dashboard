@@ -46,8 +46,8 @@ logging.basicConfig(
 logger = logging.getLogger("diaper_scraper")
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-SRC_DATA_DIR = ROOT_DIR / "src" / "data"
 PUBLIC_DATA_DIR = ROOT_DIR / "public" / "data"
+DIST_DATA_DIR = ROOT_DIR / "dist" / "data"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -985,7 +985,11 @@ def save_all_outputs(
     sizes_rows: List[Dict[str, Any]],
     metadata: Dict[str, Any],
 ) -> None:
-    for target_dir in (SRC_DATA_DIR, PUBLIC_DATA_DIR):
+    target_dirs = [PUBLIC_DATA_DIR]
+    if DIST_DATA_DIR.parent.exists():
+        target_dirs.append(DIST_DATA_DIR)
+
+    for target_dir in target_dirs:
         target_dir.mkdir(parents=True, exist_ok=True)
         write_csv(target_dir / "diaper_prices.csv", prices_rows)
         write_csv(target_dir / "diaper_brands.csv", brands_rows)
@@ -993,9 +997,9 @@ def save_all_outputs(
         with (target_dir / "scrape_metadata.json").open("w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
 
-    logger.info("Saved %d SKU pricing rows to %s", len(prices_rows), SRC_DATA_DIR / "diaper_prices.csv")
-    logger.info("Saved %d brand profiles to %s", len(brands_rows), SRC_DATA_DIR / "diaper_brands.csv")
-    logger.info("Saved %d standardized age/size mappings to %s", len(sizes_rows), SRC_DATA_DIR / "diaper_sizes.csv")
+    logger.info("Saved %d SKU pricing rows to %s", len(prices_rows), PUBLIC_DATA_DIR / "diaper_prices.csv")
+    logger.info("Saved %d brand profiles to %s", len(brands_rows), PUBLIC_DATA_DIR / "diaper_brands.csv")
+    logger.info("Saved %d standardized age/size mappings to %s", len(sizes_rows), PUBLIC_DATA_DIR / "diaper_sizes.csv")
 
 
 def parse_args() -> argparse.Namespace:

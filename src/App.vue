@@ -1348,7 +1348,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import Papa from 'papaparse'
 import {
   Baby,
@@ -1374,26 +1374,85 @@ import {
   X,
 } from 'lucide-vue-next'
 
-// Bundle CSV files directly into Vue frontend via Vite ?raw imports
-import pricesCsvRaw from './data/diaper_prices.csv?raw'
-import brandsCsvRaw from './data/diaper_brands.csv?raw'
-import sizesCsvRaw from './data/diaper_sizes.csv?raw'
-import scrapeMeta from './data/scrape_metadata.json'
+const sizesList = ref([])
+const brandsList = ref([])
+const allPrices = ref([])
+const scrapeMeta = ref({ last_scraped: '' })
+const isLoadingData = ref(true)
 
-// Parse CSVs synchronously with PapaParse
-const parsedSizes = Papa.parse(sizesCsvRaw.trim(), { header: true, skipEmptyLines: true }).data
-const parsedBrands = Papa.parse(brandsCsvRaw.trim(), { header: true, skipEmptyLines: true }).data
-const parsedPrices = Papa.parse(pricesCsvRaw.trim(), { header: true, skipEmptyLines: true }).data
+async function loadDataFromSubfolder() {
+  isLoadingData.value = true
+  try {
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    const cacheBust = `?t=${Date.now()}`
+    const [sizesRes, brandsRes, pricesRes, metaRes] = await Promise.all([
+      fetch(`${baseUrl}data/diaper_sizes.csv${cacheBust}`),
+      fetch(`${baseUrl}data/diaper_brands.csv${cacheBust}`),
+      fetch(`${baseUrl}data/diaper_prices.csv${cacheBust}`),
+      fetch(`${baseUrl}data/scrape_metadata.json${cacheBust}`),
+    ])
 
-const sizesList = ref(
-  parsedSizes
-    .map((s) => ({
-      ...s,
-      daily_usage_est: Number(s.daily_usage_est),
-      sort_order: Number(s.sort_order),
+    const [sizesCsvRaw, brandsCsvRaw, pricesCsvRaw, metaJson] = await Promise.all([
+      sizesRes.text(),
+      brandsRes.text(),
+      pricesRes.text(),
+      metaRes.ok ? metaRes.json() : Promise.resolve({}),
+    ])
+
+    scrapeMeta.value = metaJson || {}
+
+    const parsedSizes = Papa.parse(sizesCsvRaw.trim(), { header: true, skipEmptyLines: true }).data
+    const parsedBrands = Papa.parse(brandsCsvRaw.trim(), { header: true, skipEmptyLines: true }).data
+    const parsedPrices = Papa.parse(pricesCsvRaw.trim(), { header: true, skipEmptyLines: true }).data
+
+    sizesList.value = parsedSizes
+      .map((s) => ({
+        ...s,
+        daily_usage_est: Number(s.daily_usage_est),
+        sort_order: Number(s.sort_order),
+      }))
+      .sort((a, b) => a.sort_order - b.sort_order)
+
+    brandsList.value = parsedBrands.map((b) => ({
+      ...b,
+      rating: Number(b.rating),
+      review_count: Number(b.review_count),
+      absorbency_score: Number(b.absorbency_score),
+      softness_score: Number(b.softness_score),
+      leak_protection_score: Number(b.leak_protection_score),
+      eco_friendly: b.eco_friendly === 'True' || b.eco_friendly === true,
+      hypoallergenic: b.hypoallergenic === 'True' || b.hypoallergenic === true,
+      wetness_indicator: b.wetness_indicator === 'True' || b.wetness_indicator === true,
+      overnight_ready: b.overnight_ready === 'True' || b.overnight_ready === true,
+      fragrance_free: b.fragrance_free === 'True' || b.fragrance_free === true,
+      featuresList: b.features ? b.features.split('|') : [],
+      storesList: b.stores_carried ? b.stores_carried.split('|') : [],
     }))
-    .sort((a, b) => a.sort_order - b.sort_order)
-)
+
+    allPrices.value = parsedPrices.map((p) => ({
+      ...p,
+      diaper_count: Number(p.diaper_count),
+      price: Number(p.price),
+      regular_price: Number(p.regular_price),
+      price_per_diaper: Number(p.price_per_diaper),
+      monthly_cost_est: Number(p.monthly_cost_est),
+      daily_usage_est: Number(p.daily_usage_est),
+      rating: Number(p.rating),
+      review_count: Number(p.review_count),
+      on_sale: p.on_sale === 'True' || p.on_sale === true,
+      in_stock: p.in_stock === 'True' || p.in_stock === true,
+      membership_required: p.membership_required === 'True' || p.membership_required === true,
+    }))
+  } catch (err) {
+    console.error('Failed to load CSV data from data/ subfolder:', err)
+  } finally {
+    isLoadingData.value = false
+  }
+}
+
+onMounted(() => {
+  loadDataFromSubfolder()
+})
 
 const sizeSortOrderMap = computed(() => {
   const map = {}
@@ -1402,41 +1461,6 @@ const sizeSortOrderMap = computed(() => {
   }
   return map
 })
-
-const brandsList = ref(
-  parsedBrands.map((b) => ({
-    ...b,
-    rating: Number(b.rating),
-    review_count: Number(b.review_count),
-    absorbency_score: Number(b.absorbency_score),
-    softness_score: Number(b.softness_score),
-    leak_protection_score: Number(b.leak_protection_score),
-    eco_friendly: b.eco_friendly === 'True' || b.eco_friendly === true,
-    hypoallergenic: b.hypoallergenic === 'True' || b.hypoallergenic === true,
-    wetness_indicator: b.wetness_indicator === 'True' || b.wetness_indicator === true,
-    overnight_ready: b.overnight_ready === 'True' || b.overnight_ready === true,
-    fragrance_free: b.fragrance_free === 'True' || b.fragrance_free === true,
-    featuresList: b.features ? b.features.split('|') : [],
-    storesList: b.stores_carried ? b.stores_carried.split('|') : [],
-  }))
-)
-
-const allPrices = ref(
-  parsedPrices.map((p) => ({
-    ...p,
-    diaper_count: Number(p.diaper_count),
-    price: Number(p.price),
-    regular_price: Number(p.regular_price),
-    price_per_diaper: Number(p.price_per_diaper),
-    monthly_cost_est: Number(p.monthly_cost_est),
-    daily_usage_est: Number(p.daily_usage_est),
-    rating: Number(p.rating),
-    review_count: Number(p.review_count),
-    on_sale: p.on_sale === 'True' || p.on_sale === true,
-    in_stock: p.in_stock === 'True' || p.in_stock === true,
-    membership_required: p.membership_required === 'True' || p.membership_required === true,
-  }))
-)
 
 const brandMap = computed(() => {
   const map = {}
@@ -1503,9 +1527,9 @@ const pageSize = 25
 const inspectedBrand = ref(null)
 
 const formattedScrapeTime = computed(() => {
-  if (!scrapeMeta?.last_scraped) return 'Recently'
+  if (!scrapeMeta.value?.last_scraped) return 'Recently'
   try {
-    return new Date(scrapeMeta.last_scraped).toLocaleString([], {
+    return new Date(scrapeMeta.value.last_scraped).toLocaleString([], {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -1513,7 +1537,7 @@ const formattedScrapeTime = computed(() => {
       minute: '2-digit',
     })
   } catch {
-    return scrapeMeta.last_scraped
+    return scrapeMeta.value.last_scraped
   }
 })
 

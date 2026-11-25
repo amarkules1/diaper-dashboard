@@ -27,8 +27,8 @@ def test_scraper_generates_expected_stores_and_sizes():
 def test_bundled_csv_files_exist():
     root = Path(__file__).resolve().parent.parent
     for fname in ("diaper_prices.csv", "diaper_brands.csv", "diaper_sizes.csv"):
-        csv_path = root / "src" / "data" / fname
-        assert csv_path.exists(), f"Expected bundled CSV at {csv_path}"
+        csv_path = root / "public" / "data" / fname
+        assert csv_path.exists(), f"Expected CSV in data subfolder at {csv_path}"
         with csv_path.open("r", encoding="utf-8") as f:
             reader = list(csv.DictReader(f))
             assert len(reader) > 0
