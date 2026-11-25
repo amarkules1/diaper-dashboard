@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# DiaperScout Dashboard - Hourly Update Automation Script for Ubuntu
+# ==============================================================================
+# Usage:
+#   ./scripts/run_hourly_update.sh [OUTPUT_DIR]
+#
+# Environment overrides:
+#   TARGET_OUTPUT_DIR : Target folder for CSV/JSON data file exports
+#   LOG_DIR           : Directory to store execution logs
+#   JITTER            : Market price variation factor (defaults to 0.025)
+#   STORES            : Optional space-separated store names to scrape
+# ==============================================================================
+
+set -euo pipefail
+
+# Determine script and project directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Ensure common binary paths are in PATH (critical for cron environments)
+export PATH="/home/${USER:-ubuntu}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH}"
+
+# Configuration
+TARGET_OUTPUT_DIR="${1:-${TARGET_OUTPUT_DIR:-/var/data/diaper-dashboard}}"
+LOG_DIR="${LOG_DIR:-${PROJECT_ROOT}/logs}"
+LOG_FILE="${LOG_DIR}/hourly_update_$(date +'%Y%m%d').log"
+LOCK_FILE="/tmp/diaper_dashboard_hourly_update.lock"
+JITTER="${JITTER:-0.025}"
+SCRAPER_SCRIPT="scraper/scrape_diapers.py"
+
+# Ensure directories exist
+mkdir -p "${TARGET_OUTPUT_DIR}"
+mkdir -p "${LOG_DIR}"
+
+# Execute under a non-blocking lock to prevent overlapping runs
+exec 200>"${LOCK_FILE}"
+if ! flock -n 200; then
+    echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Previous update run is still in progress. Skipping this cycle." >> "${LOG_FILE}"
+    exit 0
+fi
+
+# Build scraper arguments
+SCRAPER_ARGS=(
+    "--output-dir" "${TARGET_OUTPUT_DIR}"
+    "--jitter" "${JITTER}"
+)
+
+if [[ -n "${STORES:-}" ]]; then
+    # shellcheck disable=SC2206
+    STORE_LIST=(${STORES})
+    SCRAPER_ARGS+=("--stores" "${STORE_LIST[@]}")
+fi
+
+# Log start
+echo "================================================================================" >> "${LOG_FILE}"
+echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Starting DiaperScout Hourly Update" >> "${LOG_FILE}"
+echo "  Project Root:  ${PROJECT_ROOT}" >> "${LOG_FILE}"
+echo "  Target Output: ${TARGET_OUTPUT_DIR}" >> "${LOG_FILE}"
+echo "  Price Jitter:  ${JITTER}" >> "${LOG_FILE}"
+echo "  Stores Filter: ${STORES:-ALL}" >> "${LOG_FILE}"
+echo "================================================================================" >> "${LOG_FILE}"
+
+cd "${PROJECT_ROOT}"
+
+# Run update pipeline via Pipenv (or Python 3.12 fallback)
+if command -v pipenv >/dev/null 2>&1; then
+    pipenv run python "${SCRAPER_SCRIPT}" \
+        "${SCRAPER_ARGS[@]}" \
+        >> "${LOG_FILE}" 2>&1
+elif command -v python3.12 >/dev/null 2>&1; then
+    python3.12 "${SCRAPER_SCRIPT}" \
+        "${SCRAPER_ARGS[@]}" \
+        >> "${LOG_FILE}" 2>&1
+else
+    python3 "${SCRAPER_SCRIPT}" \
+        "${SCRAPER_ARGS[@]}" \
+        >> "${LOG_FILE}" 2>&1
+fi
+
+echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] DiaperScout Hourly Update completed successfully." >> "${LOG_FILE}"
+
