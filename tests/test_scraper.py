@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import csv
-from scraper.scrape_diapers import build_datasets, STORES, SIZE_STANDARDS
+from scraper.scrape_diapers import build_datasets, save_all_outputs, parse_args, STORES, SIZE_STANDARDS
 
 
 def test_scraper_generates_expected_stores_and_sizes():
@@ -22,6 +22,18 @@ def test_scraper_generates_expected_stores_and_sizes():
         assert row["age_range"], "Missing standardized age range"
         assert float(row["price"]) > 0
         assert float(row["price_per_diaper"]) > 0
+
+
+def test_custom_output_dir_parameter(tmp_path):
+    args = parse_args(["--output-dir", str(tmp_path), "--offline"])
+    assert args.output_dir == tmp_path
+    assert args.offline is True
+
+    prices, brands, sizes, meta = build_datasets(selected_stores=["Target", "Amazon"], skip_network=True)
+    save_all_outputs(prices, brands, sizes, meta, output_dir=args.output_dir)
+
+    for fname in ("diaper_prices.csv", "diaper_brands.csv", "diaper_sizes.csv", "scrape_metadata.json"):
+        assert (tmp_path / fname).exists(), f"Missing {fname} in custom output directory"
 
 
 def test_bundled_csv_files_exist():

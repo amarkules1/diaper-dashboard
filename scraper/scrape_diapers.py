@@ -984,10 +984,14 @@ def save_all_outputs(
     brands_rows: List[Dict[str, Any]],
     sizes_rows: List[Dict[str, Any]],
     metadata: Dict[str, Any],
+    output_dir: Optional[Path] = None,
 ) -> None:
-    target_dirs = [PUBLIC_DATA_DIR]
-    if DIST_DATA_DIR.parent.exists():
-        target_dirs.append(DIST_DATA_DIR)
+    if output_dir is not None:
+        target_dirs = [Path(output_dir).resolve()]
+    else:
+        target_dirs = [PUBLIC_DATA_DIR]
+        if DIST_DATA_DIR.parent.exists():
+            target_dirs.append(DIST_DATA_DIR)
 
     for target_dir in target_dirs:
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -996,20 +1000,26 @@ def save_all_outputs(
         write_csv(target_dir / "diaper_sizes.csv", sizes_rows)
         with (target_dir / "scrape_metadata.json").open("w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
+        logger.info("Saved %d SKU pricing rows to %s", len(prices_rows), target_dir / "diaper_prices.csv")
+        logger.info("Saved %d brand profiles to %s", len(brands_rows), target_dir / "diaper_brands.csv")
+        logger.info("Saved %d standardized age/size mappings to %s", len(sizes_rows), target_dir / "diaper_sizes.csv")
 
-    logger.info("Saved %d SKU pricing rows to %s", len(prices_rows), PUBLIC_DATA_DIR / "diaper_prices.csv")
-    logger.info("Saved %d brand profiles to %s", len(brands_rows), PUBLIC_DATA_DIR / "diaper_brands.csv")
-    logger.info("Saved %d standardized age/size mappings to %s", len(sizes_rows), PUBLIC_DATA_DIR / "diaper_sizes.csv")
 
-
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Scrape and update diaper pricing, availability, and ratings CSVs.")
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Optional directory to save the generated CSVs and metadata JSON (defaults to public/data and dist/data)",
+    )
     parser.add_argument(
         "--stores",
         nargs="+",
         default=list(STORES.keys()),
         choices=list(STORES.keys()),
-        help="Retail stores to scrape (default: all 6 target stores)",
+        help="Retail stores to scrape (default: all 7 target stores)",
     )
     parser.add_argument(
         "--jitter",
@@ -1022,7 +1032,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Skip live HTTP probing and refresh CSVs immediately",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main() -> None:
@@ -1033,7 +1043,7 @@ def main() -> None:
         jitter_pct=args.jitter,
         skip_network=args.offline,
     )
-    save_all_outputs(prices_rows, brands_rows, sizes_rows, metadata)
+    save_all_outputs(prices_rows, brands_rows, sizes_rows, metadata, output_dir=args.output_dir)
     logger.info("Scrape complete at %s", metadata["last_scraped"])
 
 
